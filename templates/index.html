@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Price Sense AI</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f0; color: #1a1a1a; min-height: 100vh; }
+  .app { display: grid; grid-template-columns: 340px 1fr; min-height: 100vh; }
+  .sidebar { background: #fff; border-right: 0.5px solid rgba(0,0,0,0.12); padding: 24px 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .logo-icon { width: 32px; height: 32px; background: #1D9E75; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; }
+  .logo-name { font-size: 17px; font-weight: 500; }
+  .logo-sub { font-size: 12px; color: #666; margin-top: 2px; }
+  .section-label { font-size: 11px; font-weight: 500; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; color: #555; }
+  .field input, .field select, .field textarea { font-size: 14px; padding: 8px 10px; border: 0.5px solid rgba(0,0,0,0.25); border-radius: 8px; background: #fff; color: #1a1a1a; outline: none; width: 100%; transition: border-color 0.15s; font-family: inherit; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: #1D9E75; box-shadow: 0 0 0 2px rgba(29,158,117,0.12); }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .discount-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .range-wrap { display: flex; align-items: center; gap: 10px; }
+  .range-wrap input[type=range] { flex: 1; accent-color: #1D9E75; }
+  .analyze-btn { width: 100%; padding: 11px; background: #1D9E75; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .analyze-btn:hover { background: #0F6E56; }
+  .analyze-btn:active { transform: scale(0.98); }
+  .analyze-btn:disabled { background: #9FE1CB; cursor: not-allowed; }
+  .main { padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: #aaa; text-align: center; }
+  .empty-icon { width: 56px; height: 56px; background: #f0f0eb; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+  .empty-icon svg { width: 28px; height: 28px; stroke: #B4B2A9; stroke-width: 1.5; fill: none; }
+  .verdict-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 20px 24px; }
+  .verdict-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .verdict-badge { padding: 4px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; }
+  .verdict-run { background: #EAF3DE; color: #3B6D11; }
+  .verdict-caution { background: #FAEEDA; color: #854F0B; }
+  .verdict-skip { background: #FCEBEB; color: #A32D2D; }
+  .verdict-title { font-size: 18px; font-weight: 500; }
+  .verdict-body { font-size: 14px; color: #555; line-height: 1.7; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .metric-card { background: #f5f5f0; border-radius: 8px; padding: 14px 16px; }
+  .metric-label { font-size: 12px; color: #666; margin-bottom: 6px; }
+  .metric-val { font-size: 22px; font-weight: 500; }
+  .metric-sub { font-size: 12px; color: #999; margin-top: 3px; }
+  .metric-pos { color: #1D9E75; }
+  .metric-neg { color: #D85A30; }
+  .metric-neu { color: #1a1a1a; }
+  .section-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 20px 24px; }
+  .section-title { font-size: 15px; font-weight: 500; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .section-title svg { width: 18px; height: 18px; stroke: #888; stroke-width: 1.8; fill: none; flex-shrink: 0; }
+  .bar-wrap { margin-top: 8px; }
+
+  .bar-label { width: 180px; color: #666; flex-shrink: 0;}
+  .bar-label { color: #666;}
+
+  .bar-row{
+    display:grid;
+    grid-template-columns:220px 1fr 80px;
+    gap:15px;
+    align-items:center;
+    margin-bottom:18px;
+}
+
+
+.profit-positive{
+    color:#16a34a;
+    font-weight:700;
+}
+
+.profit-negative{
+    color:#dc2626;
+    font-weight:700;
+}
+.bar-label{
+    color:#555;
+    font-size:14px;
+}
+
+.bar-track{
+    width:100%;
+    height:10px;
+    background:#f0f0eb;
+    border-radius:5px;
+    overflow:hidden;
+}
+
+.bar-fill{
+    height:100%;
+    border-radius:5px;
+}
+
+.bar-num{
+    text-align:right;
+    color:#D85A30;
+    font-weight:600;
+    white-space:nowrap;
+}
+
+.verdict-run{
+    background:#e8f5e9;
+    color:#2e7d32;
+}
+
+.verdict-caution{
+    background:#fff8e1;
+    color:#f57c00;
+}
+
+.verdict-skip{
+    background:#ffebee;
+    color:#c62828;
+}
+
+.alt-card{
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:12px;
+    background:#fff;
+    transition:0.2s;
+}
+
+.alt-card:hover{
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+  
+  
+  .bar-track { flex: 1; height: 8px; background: #f0f0eb; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .bar-num { width: 50px; text-align: right; font-weight: 500; font-size: 13px; }
+  .risk-list { display: flex; flex-direction: column; gap: 8px; }
+  .risk-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.55; }
+  .risk-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .risk-high { background: #E24B4A; }
+  .risk-med { background: #EF9F27; }
+  .risk-low { background: #639922; }
+  .scenario-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .scenario-box { border: 0.5px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 12px 14px; }
+  .scenario-name { font-size: 12px; color: #666; margin-bottom: 6px; }
+  .scenario-val { font-size: 17px; font-weight: 500; }
+  .scenario-sub { font-size: 12px; color: #999; margin-top: 2px; }
+ 
+  .alt-scenarios{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.alt-card{
+    background:#f5f5f0;
+    border-radius:10px;
+    padding:16px;
+    border:1px solid rgba(0,0,0,0.08);
+}
+
+.chatbot-container{
+    background:#fff;
+    border:1px solid rgba(0,0,0,0.1);
+    border-radius:12px;
+    padding:20px;
+    margin-top:20px;
+}
+
+.alt-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.alt-discount{
+    font-size:16px;
+    font-weight:600;
+}
+
+.alt-note{
+    font-size:14px;
+    color:#666;
+    line-height:1.6;
+}
+
+.alt-tag{
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.alt-tag.better{
+    background:#EAF3DE;
+    color:#3B6D11;
+}
+
+.alt-tag.worse{
+    background:#FCEBEB;
+    color:#A32D2D;
+}
+
+.alt-tag.similar{
+    background:#FAEEDA;
+    color:#854F0B;
+}
+
+.chat-input-row{
+    display:flex;
+    gap:10px;
+}
+
+.chat-input-row input{
+    flex:1;
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:8px;
+}
+
+.chat-input-row button{
+    background:#10b981;
+    color:white;
+    border:none;
+    padding:10px 20px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.chat-toggle{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:#10b981;
+    color:white;
+    font-size:28px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    cursor:pointer;
+    z-index:99999;
+    box-shadow:0 8px 25px rgba(0,0,0,.25);
+}
+
+.chatbot-container{
+    position:fixed;
+    right:20px;
+    bottom:90px;
+    width:380px;
+    height:500px;
+    background:white;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    display:none;
+    flex-direction:column;
+    z-index:99999;
+}
+
+.chat-header{
+    padding:12px 15px;
+    border-bottom:1px solid #eee;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-weight:600;
+}
+
+.chat-close{
+    border:none;
+    background:none;
+    cursor:pointer;
+    font-size:18px;
+}
+
+.chat-messages{
+    flex:1;
+    overflow-y:auto;
+    padding:10px;
+}
+
+@media print {
+
+svg {
+    display: none !important;
+}
+
+}
+
+#pdfBtn{
+    position: fixed;
+    bottom: 100px;   /* above chatbot */
+    right: 25px;
+
+    width: 40px;
+    height: 40px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: #2563eb;
+    color: white;
+
+    font-size: 24px;
+    cursor: pointer;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    z-index: 9999;
+}
+
+#pdfBtn:hover{
+    transform: scale(1.05);
+}
+
+
+  .alt-label { color: #555; }
+  .alt-better { color: #1D9E75; font-weight: 500; }
+  .alt-worse { color: #D85A30; font-weight: 500; }
+  .thinking { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 14px; }
+  .spinner { width: 36px; height: 36px; border: 2.5px solid #9FE1CB; border-top-color: #1D9E75; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .thinking-msg { font-size: 14px; color: #666; }
+  .api-banner { background: #FAEEDA; border: 0.5px solid #FAC775; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #854F0B; }
+  .api-banner a { color: #854F0B; font-weight: 500; }
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 0.5px solid rgba(0,0,0,0.12); }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .scenario-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        </div>
+        <div>
+          <div class="logo-name">Price Sense AI</div>
+          <div class="logo-sub">Promotion intelligence</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Retailer</div>
+      <div class="field">
+        <label>Business type</label>
+        <select id="bizType">
+          <option value="specialty nuts retailer">Specialty nuts retailer</option>
+          <option value="grocery chain">Grocery chain</option>
+          <option value="beverage brand">Beverage brand</option>
+          <option value="specialty food retailer">Specialty food retailer</option>
+          <option value="snack brand">Snack brand</option>
+          <option value="organic grocery">Organic grocery</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Promotion</div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="field"><label>Product</label><input type="text" id="product" value="Salted Pistachios 16oz" /></div>
+        <div class="field"><label>Category</label><input type="text" id="category" value="Nuts &amp; Seeds" /></div>
+        <div class="field">
+          <label>Catalog (related products)</label>
+          <textarea id="catalog" rows="3">Roasted Almonds (8oz, 16oz, 32oz)
+Salted Pistachios (8oz, 16oz, 32oz)
+Mixed Nuts variety packs</textarea>
+        </div>
+        <div class="field">
+          <label>Discount &mdash; <span id="discLabel" style="color:#1D9E75;font-weight:500;">25%</span></label>
+          <div class="range-wrap">
+            <input type="range" id="discount" min="5" max="50" step="5" value="25"
+              oninput="document.getElementById('discLabel').textContent=this.value+'%'" />
+          </div>
+        </div>
+        <div class="discount-row">
+          <div class="field"><label>Start date</label><input type="date" id="startDate" /></div>
+          <div class="field">
+            <label>Duration</label>
+            <select id="duration">
+              <option value="3 days">3 days</option>
+              <option value="1 week" selected>1 week</option>
+              <option value="2 weeks">2 weeks</option>
+              <option value="1 month">1 month</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Baseline weekly units sold</label><input type="number" id="baseUnits" value="420" min="1" /></div>
+        <div class="field"><label>Unit price ($)</label><input type="number" id="unitPrice" value="12.99" step="0.01" min="0.01" /></div>
+        <div class="field"><label>Unit cost ($)</label><input type="number" id="unitCost" value="6.50" step="0.01" min="0.01" /></div>
+      </div>
+    </div>
+    <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      Analyze promotion
+    </button>
+    <button onclick="clearPage()" class="clear-btn">
+      Clear Page
+    </button>
+  </div>
+
+  <div class="main" id="main">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:500;color:#666;margin-bottom:6px;">No analysis yet</div>
+        <div style="font-size:13px;max-width:260px;color:#aaa;">Enter your API key, configure the promotion, and click <strong>Analyze</strong>.</div>
+      </div>
+       
+    </div>
+    <div id="reportSection">
+      <div id="results"
+      style="display:none;flex-direction:column;gap:16px;">
+      </div>
+    </div>
+
+    <!-- CHATBOT -->
+    <!-- Floating Button -->
+<div class="chat-toggle" onclick="toggleChat()">
+  💬
+</div>
+
+<!-- Chat Window -->
+<div class="chatbot-container" id="chatbot">
+
+  <div class="chat-header">
+      <span>💬 AI Promotion Assistant</span>
+
+      <button class="chat-close"
+              onclick="toggleChat()">
+          ✕
+      </button>
+  </div>
+
+  <div id="chatMessages" class="chat-messages">
+    <div class="bot-message">
+      👋 Welcome to Price Sense AI!
+
+      Analyze a promotion first, then ask me:
+
+      • Explain the result
+      • What are the risks?
+      • Why RUN / DO NOT RUN?
+      • Alternative discounts
+      • Cannibalization impact
+      • Final recommendation
+    </div>
+  </div>
+
+  <div class="chat-input-row">
+      <input
+          id="chatInput"
+          type="text"
+          placeholder="Ask about this promotion..."
+      >
+
+      <button onclick="sendChat()">
+          Send
+      </button>
+  </div>
+
+</div>
+
+<div> <button id="pdfBtn" onclick="printPDF()">📄</button></div>
+
+</div>
+
+<script>
+const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+document.getElementById('startDate').value = tomorrow.toISOString().split('T')[0];
+
+function g(id){ return (document.getElementById(id)?.value||'').trim(); }
+
+// ── Robust JSON extractor ────────────────────────────────────────────────────
+// Handles Gemini truncation: closes open strings, arrays, objects.
+function extractJSON(raw) {
+  let text = raw
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/g, '')
+    .trim();
+
+  const start = text.indexOf('{');
+  if (start === -1) throw new Error('No JSON object found in Gemini response');
+  text = text.slice(start);
+
+  // Try direct parse first (fast path — works when response is complete)
+  try { return JSON.parse(text); } catch (_) {}
+
+  // ── Recovery: walk character-by-character tracking structure depth ──────
+  // This correctly handles truncation inside a string value.
+  let i = 0, inString = false, escaped = false;
+  let braces = 0, brackets = 0;
+  let lastCompleteValueEnd = 0;  // track last position outside any string
+
+  while (i < text.length) {
+    const ch = text[i];
+    if (escaped) { escaped = false; i++; continue; }
+    if (ch === '\\' && inString) { escaped = true; i++; continue; }
+    if (ch === '"') {
+      inString = !inString;
+      if (!inString) lastCompleteValueEnd = i + 1;  // just closed a string
+      i++; continue;
+    }
+    if (!inString) {
+      if (ch === '{') braces++;
+      else if (ch === '}') { braces--; lastCompleteValueEnd = i + 1; }
+      else if (ch === '[') brackets++;
+      else if (ch === ']') { brackets--; lastCompleteValueEnd = i + 1; }
+    }
+    i++;
+  }
+
+  let fixed = text;
+
+  if (inString) {
+    // Truncated inside a string — close the string, then trim trailing comma
+    fixed = text + '"';
+    fixed = fixed.replace(/,\s*"$/, '"');   // remove trailing comma before closed string
+    // Re-count structure after fix
+    braces = 0; brackets = 0; let inS2 = false; let esc2 = false;
+    for (let j = 0; j < fixed.length; j++) {
+      const c = fixed[j];
+      if (esc2) { esc2 = false; continue; }
+      if (c === '\\' && inS2) { esc2 = true; continue; }
+      if (c === '"') { inS2 = !inS2; continue; }
+      if (!inS2) {
+        if (c === '{') braces++;
+        else if (c === '}') braces--;
+        else if (c === '[') brackets++;
+        else if (c === ']') brackets--;
+      }
+    }
+  }
+
+  // Remove any trailing comma before we close structures
+  fixed = fixed.replace(/,\s*$/, '');
+  fixed += ']'.repeat(Math.max(0, brackets));
+  fixed += '}'.repeat(Math.max(0, braces));
+
+  return JSON.parse(fixed);
+}
+
+async function runAnalysis(){
+  
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+
+  document.getElementById('emptyState').style.display = 'none';
+
+  const res = document.getElementById('results');
+  res.style.display = 'flex';
+
+  res.innerHTML = `
+    <div class="thinking">
+      <div class="spinner"></div>
+      <div class="thinking-msg">
+        Running promotion analysis…
+      </div>
+    </div>`;
+
+     // ADD THESE LINES
+  const discount = parseInt(document.getElementById('discount').value);
+  const baseUnits = parseFloat(g('baseUnits')) || 420;
+  const unitPrice = parseFloat(g('unitPrice')) || 12.99;
+  const unitCost = parseFloat(g('unitCost')) || 6.50;
+  const product = g('product') || 'Product';
+  const bizType = g('bizType') || 'retailer';
+  const category = g('category') || 'General';
+  const catalog = g('catalog') || '';
+  const startDate = g('startDate') || 'next week';
+  const duration = g('duration') || '1 week';
+
+  const discountedPrice = unitPrice * (1 - discount / 100);
+  const baseRevWeek = baseUnits * unitPrice;
+  const baseMarginWeek = baseUnits * (unitPrice - unitCost);
+  
+  
+  try {
+    const response = await fetch("/analyze", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        product,
+        category,
+        discount,
+        unitPrice,
+        unitCost,
+        baseUnits,
+        catalog,
+        startDate,
+        duration,
+        bizType
+    })
+});
+
+const d = await response.json();
+
+if (d.error) {
+    throw new Error(d.error);
+}
+
+    renderResults(d, { discount, baseUnits, unitPrice, unitCost, discountedPrice, baseRevWeek, baseMarginWeek,bizType });
+
+  } catch(err) {
+    res.innerHTML = `<div style="padding:24px;color:#c0392b;font-size:14px;background:#fff;border-radius:12px;border:0.5px solid rgba(0,0,0,0.1);">
+      <strong>Error:</strong> ${err.message}
+    </div>`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Analyze promotion';
+}
+
+function renderResults(d, p){
+  const verdictClass = {RUN:'verdict-run', CAUTION:'verdict-caution', SKIP:'verdict-skip'}[d.verdict]||'verdict-caution';
+  const m = d.metrics||{};
+  const promoUnits  = p.baseUnits + (m.incremental_units||0);
+  const promoMargin = promoUnits * (p.discountedPrice - p.unitCost);
+  const promoRev    = promoUnits * p.discountedPrice;
+  const revDelta    = promoRev - p.baseRevWeek;
+  const marginDelta = promoMargin - p.baseMarginWeek;
+  const maxBar = Math.max(...(d.cannibalization||[]).map(c=>Math.abs(parseFloat((c.impact||'0').replace(/[$,-]/g,'')))),1);
+
+  const scenHtml = d.scenarios ? ['pessimistic','base','optimistic'].map(k=>{
+    const sc = d.scenarios[k]||{};
+    const pos = (sc.profit_delta||0) >= 0;
+    return `<div class="scenario-box">
+      <div class="scenario-name">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
+      <div class="scenario-val ${pos?'metric-pos':'metric-neg'}">${pos?'+':''}$${Math.abs(Math.round(sc.profit_delta||0)).toLocaleString()}</div>
+      <div class="scenario-sub">${Math.round(sc.lift_pct||0)}% unit lift</div>
+    </div>`;
+  }).join('') : '';
+
+  const cannHtml = (d.cannibalization||[]).map(c=>{
+    let impactValue = -100;
+
+    if(typeof c.impact === "string"){
+        const match = c.impact.match(/-?\d+(\.\d+)?/);
+        if(match) impactValue = Math.abs(parseFloat(match[0]));
+    }
+
+    return `
+    <div class="bar-row">
+        <div class="bar-label">${c.product || "Related Product"}</div>
+
+        <div class="bar-track">
+            <div class="bar-fill"
+                 style="width:${Math.min(impactValue,100)}%;
+                        background:#F0997B;">
+            </div>
+        </div>
+
+        <div class="bar-num">
+            ${typeof c.impact === "string"
+                ? c.impact
+                : "$" + impactValue}
+        </div>
+    </div>`;
+}).join('');
+
+  const riskHtml = (d.risks||[]).map(r=>
+    `<div class="risk-item"><div class="risk-dot risk-${r.level||'med'}"></div><div>${r.text}</div></div>`
+  ).join('');
+
+  const altHtml = (d.alternatives || []).map(a => `
+<div class="alt-card">
+
+    <div class="alt-top">
+        <span class="alt-discount">${a.label}</span>
+
+        <span class="alt-tag ${
+            a.verdict === 'better'
+                ? 'better'
+                : a.verdict === 'worse'
+                ? 'worse'
+                : 'similar'
+        }">
+            ${a.verdict.toUpperCase()}
+        </span>
+    </div>
+
+    <div class="alt-note">
+        Lift: ${a.lift}%<br>
+        Profit: $${a.profit}<br>
+        ${a.note || ''}
+    </div>
+
+</div>
+`).join('');
+
+  document.getElementById('results').innerHTML = `
+        <div class="verdict-card">
+      <div class="verdict-header">
+        <span class="verdict-badge ${verdictClass}">
+          ${d.verdict}
+        </span>
+
+        <span class="verdict-title">
+          ${d.headline || ''}
+        </span>
+      </div>
+
+      <div class="verdict-body">
+        ${d.summary || ''}
+      </div>
+
+      <div style="
+          margin-top:12px;
+          padding:8px 12px;
+          background:#f5f5f0;
+          border-radius:6px;
+          font-size:13px;
+          color:#666;
+      ">
+          Industry Template:
+          <strong>${p.bizType}</strong>
+      </div>
+      ${d.timing_note?`<div style="margin-top:10px;font-size:13px;color:#666;padding:8px 12px;background:#f5f5f0;border-radius:6px;">${d.timing_note}</div>`:''}
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Projected unit lift</div>
+        <div class="metric-val metric-pos">+${Math.round(m.projected_lift_pct||0)}%</div>
+        <div class="metric-sub">+${Math.round(m.incremental_units||0)} units/wk</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Net revenue change</div>
+        <div class="metric-val ${revDelta>=0?'metric-pos':'metric-neg'}">${revDelta>=0?'+':'-'}$${Math.abs(Math.round(revDelta)).toLocaleString()}</div>
+        <div class="metric-sub">Baseline: $${Math.round(p.baseRevWeek).toLocaleString()}/wk</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Promotion Score</div>
+        <div class="metric-val metric-pos">${d.promotion_score || 0}/100</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Confidence</div>
+        <div class="metric-val metric-pos">${d.confidence || 0}%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Gross profit change</div>
+        <div class="metric-val ${marginDelta>=0?'metric-pos':'metric-neg'}">${marginDelta>=0?'+':'-'}$${Math.abs(Math.round(marginDelta)).toLocaleString()}</div>
+        <div class="metric-sub">Baseline: $${Math.round(p.baseMarginWeek).toLocaleString()}/wk</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Break-even lift needed</div>
+        <div class="metric-val metric-neu">${Math.round(m.break_even_lift_pct||0)}%</div>
+        <div class="metric-sub">Cannibalization: ${Math.round(m.cannibalization_pct||0)}%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Incremental Profit</div>
+        <div class="metric-val metric-pos">+$${Math.round(m.incremental_profit || 0)}</div>
+        <div class="metric-sub">Profit generated by promotion</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Promotion ROI</div>
+        <div class="metric-val ${(m.roi_pct || 0) >= 0 ? 'metric-pos': 'metric-neg'}">${Math.round(m.roi_pct || 0)}%</div>
+        <div class="metric-sub">Return on Promotion Investment</div>
+        <div style="margin-top:8px;font-size:12px;color:#666;">Efficiency of discount spend</div>
+      </div>
+
+    </div>
+    ${d.scenarios?`<div class="section-card">
+      <div class="section-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Scenario analysis</div>
+      <div class="scenario-grid">${scenHtml}</div>
+    </div>`:''}
+
+    ${d.comparison ?`<div class="section-card">
+      <div class="section-title">Promotion vs Baseline</div>
+      <table style="width:100%;border-collapse:collapse;text-align:center;">
+      <thead>
+      <tr>
+      <th style="padding:10px;">Metric</th>
+      <th style="padding:10px;">Baseline</th>
+      <th style="padding:10px;">Promotion</th>
+      </tr>
+      </thead>
+
+      <tbody>
+
+      <tr>
+      <td style="padding:10px;">Revenue</td>
+      <td>$${d.comparison.baseline_revenue}</td>
+      <td>$${d.comparison.promo_revenue}</td>
+      </tr>
+
+      <tr>
+      <td style="padding:10px;">Profit</td>
+      <td>$${d.comparison.baseline_profit}</td>
+      <td>$${d.comparison.promo_profit}</td>
+      </tr>
+
+      </tbody>
+      </table>
+    </div>`: ''}
+
+    ${cannHtml?`<div class="section-card">
+      <div class="section-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Cannibalization impact</div>
+      <div class="bar-wrap">${cannHtml}</div>
+    </div>`:''}
+    ${riskHtml?`<div class="section-card">
+      <div class="section-title"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Risk factors</div>
+      <div class="risk-list">${riskHtml}</div>
+    </div>`:''}
+    ${d.recommendation_drivers ? `
+    <div class="section-card">
+    <div class="section-title">Why this recommendation?</div><ul style="padding-left:20px;line-height:2;">
+    ${d.recommendation_drivers.map(x => `<li>${x}</li>`).join("")}</ul></div>` : ''}
+
+    ${d.assumptions ? `
+    <div class="section-card">
+    <div class="section-title">Assumptions</div><ul style="padding-left:20px;line-height:2;">
+    ${d.assumptions.map(x => `<li>${x}</li>`).join("")}</ul></div>` : ''}
+      
+    ${altHtml?`<div class="section-card">
+      <div class="section-title"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Alternative discounts</div>
+      <div class="alt-scenarios">${altHtml}</div>
+    </div>`:''}`;
+}
+
+async function sendChat() {
+
+const input = document.getElementById("chatInput");
+
+const question = input.value.trim();
+
+if (!question) return;
+
+addMessage("You", question);
+
+input.value = "";
+
+try {
+
+    const response = await fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            question: question
+        })
+    });
+
+    const data = await response.json();
+
+    addMessage(
+        "AI",
+        data.answer || "Waiting For Load main screen"
+    );
+
+}
+catch(err) {
+
+    console.error(err);
+
+    addMessage(
+        "AI",
+        "Unable to contact assistant."
+    );
+
+}
+}
+
+function addMessage(sender, text) {
+
+    const messages =
+        document.getElementById("chatMessages");
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        sender === "You"
+        ? "user-message"
+        : "bot-message";
+
+    div.innerHTML =
+        `<b>${sender}:</b> ${text}`;
+
+    messages.appendChild(div);
+
+    messages.scrollTop =
+        messages.scrollHeight;
+}
+
+function toggleChat(){
+
+const chat =
+    document.getElementById("chatbot");
+
+if(chat.style.display === "flex"){
+    chat.style.display = "none";
+}
+else{
+    chat.style.display = "flex";
+}
+}
+
+function clearPage() {
+
+    document.querySelectorAll(
+        'input[type="text"],input[type="number"]'
+    ).forEach(input => {
+        input.value = "";
+    });
+
+    document.querySelectorAll("select")
+    .forEach(select => {
+        select.selectedIndex = 0;
+    });
+
+    const resultContainer =
+        document.getElementById("results");
+
+    if(resultContainer){
+        resultContainer.innerHTML = "";
+        resultContainer.style.display = "none";
+    }
+
+    const chatMessages =
+        document.getElementById("chatMessages");
+
+    if(chatMessages){
+        chatMessages.innerHTML = `
+        <div class="bot-message">
+            👋 Welcome to Price Sense AI.
+            Analyze a promotion and ask me questions.
+        </div>`;
+    }
+
+    const chatInput =
+        document.getElementById("chatInput");
+
+    if(chatInput){
+        chatInput.value = "";
+    }
+
+    }
+
+window.onload = () => {
+
+const messages =
+    document.getElementById("chatMessages");
+
+messages.innerHTML = `
+    <div class="bot-message">
+        👋 Welcome to Price Sense AI.<br><br>
+        Run an analysis first.<br><br>
+        Ask me:
+        <br>• Risks
+        <br>• Recommendation
+        <br>• Scenarios
+        <br>• Alternatives
+        <br>• Why RUN / DO NOT RUN?
+    </div>
+`;
+};
+
+function printPDF() {
+
+let content =
+    document.getElementById("reportSection").innerHTML;
+
+content = content.replace(/<svg[\s\S]*?<\/svg>/gi, '');
+
+const win = window.open('', '', 'width=1200,height=800');
+
+win.document.write(`
+    <html>
+    <head>
+        <title>Price Sense AI Report</title>
+
+        <style>
+            body{
+                font-family: Arial, sans-serif;
+                padding:20px;
+            }
+
+            svg{
+                display:none !important;
+            }
+        </style>
+    </head>
+
+    <body>
+        ${content}
+    </body>
+
+    </html>
+`);
+
+win.document.close();
+
+setTimeout(() => {
+    win.print();
+}, 500);
+}
+
+
+
+document.getElementById("chatInput")
+.addEventListener("keypress", function(e){
+
+    if(e.key === "Enter"){
+        e.preventDefault();
+        sendChat();
+    }
+
+});
+
+
+</script>
+</body>
+</html>
